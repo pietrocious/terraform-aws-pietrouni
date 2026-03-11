@@ -8,123 +8,117 @@
 
 [pietrouni.com](https://pietrouni.com)
 
-this is a production-grade cloud infrastructure designed to test devops engineering capabilities through infrastructure-as-code, automated monitoring, and modern deployment practices.
+This repository manages the AWS infrastructure for `pietrouni.com` using Terraform.
 
-in physics, supersymmetry describes universal balance through particle partnerships. in infrastructure, we build that balance through architectural patterns.
+The current stack is intentionally small and focused:
+- S3 for static site storage
+- CloudFront for CDN delivery and HTTPS
+- Route53 for DNS
+- ACM for certificate management
 
-this project showcases symmetry and resilience across distributed systems: multi-az redundancy, auto-scaling compute, and globally distributed content delivery. 
-
-built using [terraform](https://github.com/hashicorp/terraform) and [AWS](https://github.com/aws)
-
-posting updates & soon video walk-through :)
+Built using [Terraform](https://github.com/hashicorp/terraform) and [AWS](https://github.com/aws).
 
 ---
 
 ## project overview
 
-this repository showcases a complete aws infrastructure built with terraform, featuring multi-az networking, auto-scaling compute resources, global content delivery, and monitoring. 
+This project is a learning-focused Terraform repository for a production static website on AWS.
 
-designed to demonstrate practical devops skills applicable to enterprise environments
+The goal is to keep the infrastructure small enough to understand end to end, while still applying good IaC practices around DNS, certificates, content delivery, state management, and deployment safety.
 
 ## architecture
 
-### composed of:
-
-**networking foundation**
-- custom vpc with public/private subnets across multiple availability zones
-- internet gateway for public internet access
-- route tables and security groups following least-privilege principles
-- designed for high availability and fault tolerance
-
-**auto-scaling compute layer**
-- application load balancer distributing traffic across multiple azs
-- auto scaling groups with cpu-based scaling policies (2-4 instances)
-- health checks and automated failover for self-healing infrastructure
-- cloudwatch monitoring with sns alerts on high/low cpu and unhealthy targets
-
-**static site hosting**
-- s3 bucket with cloudfront cdn for global content delivery
-- Route53 DNS management with custom domain
-- ACM TLS/SSL certificates for https encryption
-- origin access control (OAC) restricting s3 access to cloudfront only
-- secure architecture preventing direct s3 access while enabling fast global delivery
+The current Terraform config provisions:
+- an S3 bucket for site content
+- a CloudFront distribution in front of the bucket
+- an origin access control (OAC) so CloudFront can read from S3
+- an ACM certificate for `pietrouni.com` and `www.pietrouni.com`
+- a Route53 hosted zone and alias records for the domain
 
 ### tech stack
 
 **infrastructure**
-- AWS: vpc, ec2, alb, asg, s3, cloudfront, route53, acm, cloudwatch, sns
-- terraform: infrastructure as code with reusable modules
-- github actions: automated validation on every commit
+- aws: s3, cloudfront, route53, acm
+- terraform: infrastructure as code
+- github actions: terraform validation workflow
 
 **devops practices**
 - infrastructure as code (iac) for reproducibility
-- modular design for reusability across environments
-- automated monitoring and alerting
-- security-first architecture (least privilege, encrypted traffic, restricted access)
-- cost optimization (destroy unused resources, leverage free tier)
+- versioned infrastructure changes through git
+- secure static-site delivery through cloudfront and oac
+- iterative improvement of state management, validation, and deployment workflows
 
-### structure
+### project structure
 ```
-infrastructure/
-├── main.tf          # terraform/provider config only
-├── acm.tf           # certificate
-├── s3.tf            # bucket, policy, objects
-├── cloudfront.tf    # cdn distribution and oac
-├── route53.tf       # dns zone and records
-├── outputs.tf       # all outputs
+.
+├── README.md
+├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── production.yml
+└── infrastructure/
+    ├── main.tf
+    ├── s3.tf
+    ├── cloudfront.tf
+    ├── acm.tf
+    ├── route53.tf
+    └── outputs.tf
+```
 
-docs/                   # architecture documentation and reference configs
-archive/                # early experiments and iterations
-.github/workflows/      # ci/cd pipeline for terraform validation
-```
+Terraform files live under `infrastructure/`:
+- `main.tf`: Terraform and provider configuration
+- `s3.tf`: S3 bucket, public access block, and bucket policy
+- `cloudfront.tf`: CloudFront distribution and origin access control
+- `acm.tf`: ACM certificate and DNS validation records
+- `route53.tf`: Route53 hosted zone and DNS alias records
+- `outputs.tf`: deployment outputs such as bucket name, distribution ID, and nameservers
 
 ---
 
 ## deployment
 
 ### prerequisites
-- aws account and ec2 instance
-- terraform >= 1.13.3
+- aws account with access to s3, cloudfront, route53, and acm
+- terraform
+- a registered domain for `pietrouni.com`
 
 ### deploy infrastructure
 ```bash
-# under construction
 terraform init
 terraform plan
 terraform apply
 ```
 
----
-
-## monitoring
-
-cloudwatch alarms configured for:
-- **high_cpu (>15%)** → triggers scale-up to handle increased load
-- **low_cpu (<30%)** → triggers scale-down to reduce costs
-- **unhealthy_targets** → immediate sns email notification
-
-auto-scaling policies automatically adjust capacity based on demand, ensuring application remains responsive while optimizing costs
+After the first apply, update your registrar with the Route53 nameservers from Terraform output.
 
 ---
 
 ## security features
 
-- **network isolation:** public/private subnet separation with security groups
-- **encryption in transit:** https enforced via cloudfront with acm certificates
-- **least privilege access:** iam policies and security groups limit access scope
-- **origin access control:** s3 bucket only accessible through cloudfront distribution
-- **automated security updates:** instances configured to pull latest security patches
+- **encryption in transit:** https enforced through cloudfront and acm
+- **restricted origin access:** the s3 bucket is intended to be reachable through cloudfront, not directly
+- **infrastructure as code:** all infrastructure changes are tracked in terraform configuration
 
 ---
 
-## todo
+## roadmap
 
-- [ ] container orchestration with eks
-- [ ] remote state management with s3 backend and dynamodb locking
-- [ ] multi-environment setup (dev/staging/prod)
-- [ ] automated testing and deployment pipeline
-- [ ] infrastructure cost tracking and optimization dashboards
-- [ ] security hardening and compliance automation
+### phase 1
+
+- [ ] add remote state management with an s3 backend and dynamodb locking
+- [ ] commit the Terraform lock file and tighten Terraform/provider version constraints
+- [ ] add missing DNS `AAAA` records for full IPv6 support
+- [ ] add CloudFront SPA fallback behavior if the site requires client-side routing
+- [ ] tighten S3 public access settings around the CloudFront OAC pattern
+- [ ] improve CI to run `terraform fmt`, `terraform init -backend=false`, `terraform validate`, and lint/security checks
+- [ ] keep the documentation aligned with what is actually deployed
+
+### phase 2
+
+- [ ] add multi-environment support only if the project actually needs separate `dev`, `staging`, and `prod` stacks
+- [ ] add CloudFront response headers and other lightweight security hardening
+- [ ] improve cost visibility with basic tagging, usage review, and cost-focused cleanup
+- [ ] extract the shared static-site pattern into a reusable module if the three site repos continue to evolve in parallel
 
 ---
 

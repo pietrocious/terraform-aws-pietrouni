@@ -8,14 +8,14 @@ resource "aws_s3_bucket" "pietrouni" {
   }
 }
 
-# block public access except via cloudfront
+# block all public access — cloudfront uses oac with service principal, not public access
 resource "aws_s3_bucket_public_access_block" "pietrouni" {
   bucket = aws_s3_bucket.pietrouni.id
 
   block_public_acls       = true
   ignore_public_acls      = true
-  block_public_policy     = false
-  restrict_public_buckets = false
+  block_public_policy     = true
+  restrict_public_buckets = true
 }
 
 # bucket policy allows cloudfront access via oac

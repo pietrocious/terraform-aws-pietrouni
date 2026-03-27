@@ -39,6 +39,19 @@ resource "aws_cloudfront_distribution" "pietrouni" {
     compress               = true
   }
 
+  # spa fallback: return index.html for client-side routing
+  custom_error_response {
+    error_code         = 403
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
+  custom_error_response {
+    error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
   viewer_certificate {
     acm_certificate_arn      = aws_acm_certificate_validation.pietrouni.certificate_arn
     ssl_support_method       = "sni-only"

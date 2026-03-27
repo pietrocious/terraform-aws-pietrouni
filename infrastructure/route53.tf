@@ -33,3 +33,29 @@ resource "aws_route53_record" "pietrouni_www" {
     evaluate_target_health = false
   }
 }
+
+# ipv6 root domain points to cloudfront
+resource "aws_route53_record" "pietrouni_root_ipv6" {
+  zone_id = aws_route53_zone.pietrouni.zone_id
+  name    = "pietrouni.com"
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.pietrouni.domain_name
+    zone_id                = aws_cloudfront_distribution.pietrouni.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# ipv6 www subdomain points to cloudfront
+resource "aws_route53_record" "pietrouni_www_ipv6" {
+  zone_id = aws_route53_zone.pietrouni.zone_id
+  name    = "www.pietrouni.com"
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.pietrouni.domain_name
+    zone_id                = aws_cloudfront_distribution.pietrouni.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
